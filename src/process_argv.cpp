@@ -6,7 +6,11 @@
 #include <map>
 #include <fstream>
 #include "global_parameter.h"
+#ifdef __APPLE__
+#include <unistd.h>
+#else
 #include "sys/sysinfo.h"
+#endif
 // #include <string>
 using namespace ::std;
 #define ADA_RATIO 0.4
@@ -902,12 +906,17 @@ bool check_parameter(int argc, char *argv[], C_global_parameter &gp)
 	{
 		gp.clean_file_reads = gp.l_total_reads_num;
 	}
-	if (gp.threads_num > get_nprocs())
+	#ifdef __APPLE__
+		long nprocs = sysconf(_SC_NPROCESSORS_ONLN);
+	#else
+		int nprocs = get_nprocs();
+	#endif
+	if (gp.threads_num > nprocs)
 	{
-		gp.threads_num = get_nprocs();
+		gp.threads_num = nprocs;
 		cerr << "Warning:threads number exceeds the system cpu number" << endl;
 		// exit(1);
-	}
+	}	
 	if (gp.patchSize > 5000000)
 	{
 		cerr << "Error:patchSize cannot exceed 5M considering memory usage" << endl;
